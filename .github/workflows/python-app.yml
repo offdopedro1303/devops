@@ -9,7 +9,7 @@ on:
 
 # Uso de variáveis globais para evitar repetição [cite: 29, 30]
 env:
-  [cite_start]IMAGE_NAME: "seu-usuario-dockerhub/fastapi-app" # Lembre-se de referenciar com ${{ env.IMAGE_NAME }} [cite: 31]
+  [cite_start]IMAGE_NAME: "offdopedro/fastapi-app" # Lembre-se de referenciar com ${{ env.IMAGE_NAME }} [cite: 31]
 
 jobs:
   # ---------------------------------------------------
@@ -75,4 +75,3 @@ jobs:
             docker rm fastapi-prod || true
             # Em produção costumamos expor na porta 80 (padrão web)
             docker run -d --name fastapi-prod -p 80:8000 ${{ env.IMAGE_NAME }}:latest
-            
