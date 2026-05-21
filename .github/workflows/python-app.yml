@@ -1,0 +1,78 @@
+name: CI/CD FastAPI
+
+# O pipeline deve reagir aos pushes nas branches develop e main
+on:
+  push:
+    branches:
+      - develop
+      - main
+
+# Uso de variáveis globais para evitar repetição [cite: 29, 30]
+env:
+  [cite_start]IMAGE_NAME: "seu-usuario-dockerhub/fastapi-app" # Lembre-se de referenciar com ${{ env.IMAGE_NAME }} [cite: 31]
+
+jobs:
+  # ---------------------------------------------------
+  # 1. BUILD E PUSH DA IMAGEM
+  # ---------------------------------------------------
+  Build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+      
+      - name: Setup Docker (Build e Push)
+        run: |
+          # Aqui entram seus comandos de build e push para o DockerHub ou AWS ECR
+          echo "Construindo a imagem ${{ env.IMAGE_NAME }}..."
+          # docker build -t ${{ env.IMAGE_NAME }}:latest .
+          # docker push ${{ env.IMAGE_NAME }}:latest
+
+  # ---------------------------------------------------
+  # 2. DEPLOY EM HOMOLOGAÇÃO
+  # ---------------------------------------------------
+  Deploy_Homologacao:
+    needs: Build
+    # Deploy automático ao merge/push em develop 
+    if: github.ref == 'refs/heads/develop'
+    runs-on: ubuntu-latest
+    environment: homologacao 
+    steps:
+      - name: Executar Deploy via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.EC2_HOST_HOMOL }}
+          username: ${{ secrets.EC2_USERNAME_HOMOL }}
+          key: ${{ secrets.EC2_SSH_KEY_HOMOL }}
+          script: |
+            # Roda a aplicação na porta 8080 para homologação 
+            docker pull ${{ env.IMAGE_NAME }}:latest
+            docker stop fastapi-homol || true
+            docker rm fastapi-homol || true
+            docker run -d --name fastapi-homol -p 8080:8000 ${{ env.IMAGE_NAME }}:latest
+
+  # ---------------------------------------------------
+  # 3. DEPLOY EM PRODUÇÃO
+  # ---------------------------------------------------
+  [cite_start]Deploy_Producao: # Novo job de deploy para produção [cite: 32]
+    needs: Build
+    # Garante que produção só é ativada em push para a branch main [cite: 34, 35, 36]
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    # Vínculo com o Environment do GitHub que exige aprovação manual 
+    environment: producao
+    steps:
+      - name: Executar Deploy via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          # Usando os secrets de produção 
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            docker pull ${{ env.IMAGE_NAME }}:latest
+            docker stop fastapi-prod || true
+            docker rm fastapi-prod || true
+            # Em produção costumamos expor na porta 80 (padrão web)
+            docker run -d --name fastapi-prod -p 80:8000 ${{ env.IMAGE_NAME }}:latest
+            
