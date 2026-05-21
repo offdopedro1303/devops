@@ -8,8 +8,9 @@ on:
       - main
 
 # Uso de variáveis globais para evitar repetição [cite: 29, 30]
+# Uso de variáveis globais para evitar repetição
 env:
-  [cite_start]IMAGE_NAME: "offdopedro/fastapi-app" # Lembre-se de referenciar com ${{ env.IMAGE_NAME }} [cite: 31]
+  IMAGE_NAME: "offdopedro/fastapi-app"
 
 jobs:
   # ---------------------------------------------------
