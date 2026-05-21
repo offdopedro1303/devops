@@ -13,9 +13,6 @@ env:
   IMAGE_NAME: "offdopedro/fastapi-app"
 
 jobs:
-  # ---------------------------------------------------
-  # 1. BUILD E PUSH DA IMAGEM
-  # ---------------------------------------------------
   Build:
     runs-on: ubuntu-latest
     steps:
